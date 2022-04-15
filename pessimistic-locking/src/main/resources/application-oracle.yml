@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driverClassName: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521:xe
+    username: system
+    password: oracle
+  jpa:
+    database: oracle
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle10gDialect
+
+pessimistic-locking:
+  lockTimeOutInMs: 5000
+  test:
+    minimalPossibleLockTimeOutInMs: 0
+    delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs: 200

@@ -2,7 +2,7 @@ package com.ashimjk.jpatryout.pessimisticlocking.services;
 
 import com.ashimjk.jpatryout.pessimisticlocking.domain.Item;
 import com.ashimjk.jpatryout.pessimisticlocking.repositories.ItemRepository;
-import com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.ConcurrencyPessimisticLockingConfig;
+import com.ashimjk.jpatryout.pessimisticlocking.config.PessimisticLockingConfig;
 import com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.context.CustomizedItemRepositoryContext;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -10,9 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,15 +25,14 @@ import static org.mockito.Mockito.*;
 
 @Slf4j
 @SpringBootTest
-abstract class InventoryServiceTest {
+abstract class AbstractInventoryServiceTest {
 
     @Autowired private ItemRepository itemRepository;
     @Autowired private InventoryService inventoryService;
-    @Autowired private PlatformTransactionManager transactionManager;
 
     @SpyBean private ItemService itemService;
     @SpyBean private CustomizedItemRepositoryContext customizedItemRepositoryContext;
-    @SpyBean private ConcurrencyPessimisticLockingConfig concurrencyPessimisticLockingConfig;
+    @SpyBean private PessimisticLockingConfig pessimisticLockingConfig;
 
     @AfterEach
     void tearDown() {
@@ -65,8 +61,8 @@ abstract class InventoryServiceTest {
 
     @Test
     void shouldIncrementItemAmount_withinPessimisticLockingConcurrencyWithMinimalLockTimeout() throws Exception {
-        long minimalPossibleLockTimeOutInMs = concurrencyPessimisticLockingConfig.getMinimalPossibleLockTimeOutInMs();
-        when(concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem())
+        long minimalPossibleLockTimeOutInMs = pessimisticLockingConfig.getMinimalPossibleLockTimeOutInMs();
+        when(pessimisticLockingConfig.getLockTimeOutInMs())
                 .thenReturn(minimalPossibleLockTimeOutInMs);
 
         assertIncrementItemAmountWithPessimisticLocking(3);
@@ -81,17 +77,6 @@ abstract class InventoryServiceTest {
         // Given
         insertDelayAtTheEndOfPessimisticLockingSection();
         final Item srcItem = itemRepository.save(new Item());
-
-        // boolean requiredToSetLockTimeoutForTestsAtStartup = concurrencyPessimisticLockingConfig.isRequiredToSetLockTimeoutForTestsAtStartup();
-
-        // if (requiredToSetLockTimeoutForTestsAtStartup) {
-        //     long lockTimeOutInMs = concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem();
-        //
-        //     log.info("... set lockTimeOut {} ms through native query at startup ...", lockTimeOutInMs);
-        //     TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        //     customizedItemRepositoryContext.setLockTimeout(lockTimeOutInMs);
-        //     transactionManager.commit(tx);
-        // }
 
         // When
         final List<Integer> itemAmounts = Arrays.asList(10, 5);
@@ -114,7 +99,7 @@ abstract class InventoryServiceTest {
     }
 
     private void insertDelayAtTheEndOfPessimisticLockingSection() {
-        long delay = concurrencyPessimisticLockingConfig.getDelayAtTheEndOfTheQueryForPessimisticLockingTestingInMs();
+        long delay = pessimisticLockingConfig.getDelayAtTheEndOfTheQueryForPessimisticLockingTestingInMs();
         doAnswer(invocation -> {
             try {
                 TimeUnit.MILLISECONDS.sleep(delay);

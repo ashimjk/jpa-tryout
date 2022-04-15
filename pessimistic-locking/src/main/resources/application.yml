@@ -1,0 +1,9 @@
+spring:
+  main:
+    banner-mode: off
+  profiles:
+    active: derby
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create

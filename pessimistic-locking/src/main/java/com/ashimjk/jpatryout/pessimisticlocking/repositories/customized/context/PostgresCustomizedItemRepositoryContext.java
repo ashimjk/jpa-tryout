@@ -1,6 +1,6 @@
 package com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.context;
 
-import com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.ConcurrencyPessimisticLockingConfig;
+import com.ashimjk.jpatryout.pessimisticlocking.config.PessimisticLockingConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -12,25 +12,34 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "spring.jpa.database", havingValue = "postgresql")
-public class PostgresCustomizedItemRepositoryContextImpl extends CustomizedItemRepositoryContext {
+public class PostgresCustomizedItemRepositoryContext extends CustomizedItemRepositoryContext {
 
-    public PostgresCustomizedItemRepositoryContextImpl(
-            EntityManager em,
-            ConcurrencyPessimisticLockingConfig concurrencyPessimisticLockingConfig
+    protected final EntityManager entityManager;
+
+    public PostgresCustomizedItemRepositoryContext(
+            PessimisticLockingConfig pessimisticLockingConfig,
+            EntityManager entityManager
     ) {
-        super(em, concurrencyPessimisticLockingConfig);
+        super(pessimisticLockingConfig);
+        this.entityManager = entityManager;
+    }
+
+    @Override
+    public Query configureLockTimeout(Query query) {
+        setLockTimeout(pessimisticLockingConfig.getLockTimeOutInMs());
+        return query;
     }
 
     @Override
     public void setLockTimeout(long timeoutDurationInMs) {
         log.info("... set lockTimeOut {} ms through native query ...", timeoutDurationInMs);
-        em.createNativeQuery("set local lock_timeout = " + timeoutDurationInMs)
-          .executeUpdate();
+        entityManager.createNativeQuery("set local lock_timeout = " + timeoutDurationInMs)
+                     .executeUpdate();
     }
 
     @Override
     public long getLockTimeout() {
-        Query query = em.createNativeQuery("show lock_timeout");
+        Query query = entityManager.createNativeQuery("show lock_timeout");
         String result = (String) query.getSingleResult();
         return parseLockTimeOutToMilliseconds(result);
     }

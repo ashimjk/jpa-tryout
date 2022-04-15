@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driverClassName: org.apache.derby.jdbc.EmbeddedDriver
+    url: jdbc:derby:memory:myDb;create=true
+    username: sa
+    password: sa
+  jpa:
+    database: derby
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.DerbyDialect
+
+pessimistic-locking:
+  lockTimeOutInMs: 5000
+  test:
+    minimalPossibleLockTimeOutInMs: 0
+    delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs: 0

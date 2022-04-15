@@ -20,21 +20,17 @@ public class CustomizedItemRepositoryImpl implements CustomizedItemRepository {
     @Override
     public Item getItemAndObtainPessimisticWriteLockingOnItById(UUID id) {
         log.info("Trying to obtain pessimistic lock ...");
-        customizedItemRepositoryContext.setLockTimeoutIfRequired();
-        customizedItemRepositoryContext.setLockTimeoutIfRequiredInSeparateTransaction();
 
-        Query query = em.createQuery("select item from Item item where item.id = :id");
-        query.setParameter("id", id);
+        Query query = em.createQuery("select item from Item item where item.id = :id")
+                        .setParameter("id", id)
+                        .setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
-        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-        query = customizedItemRepositoryContext.setLockTimeoutIfRequired(query);
+        query = customizedItemRepositoryContext.configureLockTimeout(query);
 
         Item item = (Item) query.getSingleResult();
-
         log.info("... pessimistic lock obtained ...");
 
         customizedItemRepositoryContext.insertArtificialDelayAtTheEndOfTheQueryForTestsOnly();
-
         log.info("... pessimistic lock released.");
 
         return item;

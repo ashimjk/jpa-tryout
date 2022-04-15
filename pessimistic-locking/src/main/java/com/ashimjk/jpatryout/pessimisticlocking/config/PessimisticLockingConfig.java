@@ -1,4 +1,4 @@
-package com.ashimjk.jpatryout.pessimisticlocking.repositories.customized;
+package com.ashimjk.jpatryout.pessimisticlocking.config;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,20 +8,14 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "concurrency.pessimistic-locking")
-public class ConcurrencyPessimisticLockingConfig {
+@ConfigurationProperties(prefix = "pessimistic-locking")
+public class PessimisticLockingConfig {
 
-    private boolean requiredToSetLockTimeoutForEveryQuery;
-    private boolean requiredToSetLockTimeoutQueryHint;
-    private long lockTimeOutInMsForQueryGetItem;
+    private long lockTimeOutInMs;
     private Test test;
 
     public long getMinimalPossibleLockTimeOutInMs() {
         return test.getMinimalPossibleLockTimeOutInMs();
-    }
-
-    public boolean isRequiredToSetLockTimeoutForTestsAtStartup() {
-        return test.isRequiredToSetLockTimeoutForTestsAtStartup();
     }
 
     public long getDelayAtTheEndOfTheQueryForPessimisticLockingTestingInMs() {
@@ -32,7 +26,6 @@ public class ConcurrencyPessimisticLockingConfig {
     @Setter
     static class Test {
 
-        private boolean requiredToSetLockTimeoutForTestsAtStartup;
         private long minimalPossibleLockTimeOutInMs;
         private long delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs;
 

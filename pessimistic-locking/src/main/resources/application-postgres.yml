@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/jpatryout
+    username: postgres
+    password: postgres
+  jpa:
+    database: postgresql
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL10Dialect
+
+pessimistic-locking:
+  lockTimeOutInMs: 5000
+  test:
+    minimalPossibleLockTimeOutInMs: 1
+    delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs: 0
