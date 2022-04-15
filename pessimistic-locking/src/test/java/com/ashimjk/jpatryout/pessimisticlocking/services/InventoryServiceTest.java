@@ -43,81 +43,74 @@ abstract class InventoryServiceTest {
         itemRepository.deleteAll();
     }
 
-    /*
-     * TEST PESSIMISTIC LOCKING
-     */
-
     @Test
-    void shouldIncrementItemAmount_withoutConcurrency() throws Exception {
-        assertIncrementItemAmountWithPessimisticLocking(false, false, 2);
+    void shouldIncrementItemAmount_withoutConcurrency() {
+        // Given
+        final Item srcItem = itemRepository.save(new Item());
+
+        // When
+        final List<Integer> itemAmounts = Arrays.asList(10, 5);
+        for (final int amount : itemAmounts) {
+            inventoryService.incrementAmount(srcItem.getId(), amount);
+        }
+
+        // Then
+        final Item item = itemRepository
+                .findById(srcItem.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Item not found!"));
+
+        assertAll(() -> assertEquals(15, item.getAmount()),
+                  () -> verify(itemService, times(2)).incrementAmount(any(UUID.class), anyInt()));
     }
 
     @Test
     void shouldIncrementItemAmount_withinPessimisticLockingConcurrencyWithMinimalLockTimeout() throws Exception {
-        assertIncrementItemAmountWithPessimisticLocking(true, true, 3);
+        long minimalPossibleLockTimeOutInMs = concurrencyPessimisticLockingConfig.getMinimalPossibleLockTimeOutInMs();
+        when(concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem())
+                .thenReturn(minimalPossibleLockTimeOutInMs);
+
+        assertIncrementItemAmountWithPessimisticLocking(3);
     }
 
     @Test
     void shouldIncrementItemAmount_withinPessimisticLockingConcurrencyWithDefaultLockTimeout() throws Exception {
-        assertIncrementItemAmountWithPessimisticLocking(true, false, 2);
+        assertIncrementItemAmountWithPessimisticLocking(2);
     }
 
-    private void assertIncrementItemAmountWithPessimisticLocking(
-            boolean simulatePessimisticLocking,
-            boolean hasToSetMinimalLockTimeOut,
-            int expectedNumberOfItemServiceInvocations) throws Exception {
-
-        // given
-        long minimalPossibleLockTimeOutInMs = concurrencyPessimisticLockingConfig.getMinimalPossibleLockTimeOutInMs();
-
-        if (hasToSetMinimalLockTimeOut) {
-            when(concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem())
-                    .thenReturn(minimalPossibleLockTimeOutInMs);
-        }
+    private void assertIncrementItemAmountWithPessimisticLocking(int expectedNumberOfItemServiceInvocations) throws Exception {
+        // Given
+        insertDelayAtTheEndOfPessimisticLockingSection();
+        final Item srcItem = itemRepository.save(new Item());
 
         boolean requiredToSetLockTimeoutForTestsAtStartup = concurrencyPessimisticLockingConfig.isRequiredToSetLockTimeoutForTestsAtStartup();
-        long lockTimeOutInMs = concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem();
 
         if (requiredToSetLockTimeoutForTestsAtStartup) {
+            long lockTimeOutInMs = concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem();
+
             log.info("... set lockTimeOut {} ms through native query at startup ...", lockTimeOutInMs);
             TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
             customizedItemRepositoryContext.setLockTimeout(lockTimeOutInMs);
             transactionManager.commit(tx);
         }
 
-        if (simulatePessimisticLocking) {
-            insertDelayAtTheEndOfPessimisticLockingSection();
-        }
-
-        final Item srcItem = itemRepository.save(new Item());
-
-        // when
+        // When
         final List<Integer> itemAmounts = Arrays.asList(10, 5);
-
-        if (simulatePessimisticLocking) {
-            final ExecutorService executor = Executors.newFixedThreadPool(itemAmounts.size());
-
-            for (final int amount : itemAmounts) {
-                executor.execute(() -> inventoryService.incrementAmount(srcItem.getId(), amount));
-            }
-
-            executor.shutdown();
-            assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
-        } else {
-            for (final int amount : itemAmounts) {
-                inventoryService.incrementAmount(srcItem.getId(), amount);
-            }
+        final ExecutorService executor = Executors.newFixedThreadPool(itemAmounts.size());
+        for (final int amount : itemAmounts) {
+            executor.execute(() -> inventoryService.incrementAmount(srcItem.getId(), amount));
         }
 
-        // then
-        final Item item = itemRepository.findById(srcItem.getId())
-                                        .orElseThrow(() -> new IllegalArgumentException("Item not found!"));
+        executor.shutdown();
+        assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
 
-        assertAll(
-                () -> assertEquals(15, item.getAmount()),
-                () -> verify(itemService,
-                             times(expectedNumberOfItemServiceInvocations)).incrementAmount(any(UUID.class), anyInt())
-        );
+        // Then
+        final Item item = itemRepository
+                .findById(srcItem.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Item not found!"));
+
+        assertAll(() -> assertEquals(15, item.getAmount()),
+                  () -> verify(itemService, times(expectedNumberOfItemServiceInvocations))
+                          .incrementAmount(any(UUID.class), anyInt()));
     }
 
     private void insertDelayAtTheEndOfPessimisticLockingSection() {
@@ -130,32 +123,6 @@ abstract class InventoryServiceTest {
             }
             return null;
         }).when(customizedItemRepositoryContext).insertArtificialDelayAtTheEndOfTheQueryForTestsOnly();
-    }
-
-    /*
-     * TEST SET&GET LOCK TIMEOUT
-     */
-
-    @Test
-    void shouldSetAndGetLockTimeOut() {
-        if (concurrencyPessimisticLockingConfig.isRequiredToSetLockTimeoutQueryHint()) {
-            assertThrows(UnsupportedOperationException.class, () -> customizedItemRepositoryContext.setLockTimeout(0));
-            assertThrows(UnsupportedOperationException.class, () -> customizedItemRepositoryContext.getLockTimeout());
-            return;
-        }
-
-        assertSetLockTimeOut(concurrencyPessimisticLockingConfig.getMinimalPossibleLockTimeOutInMs());
-        assertSetLockTimeOut(TimeUnit.SECONDS.toMillis(2));
-        assertSetLockTimeOut(TimeUnit.MINUTES.toMillis(2));
-        assertSetLockTimeOut(TimeUnit.HOURS.toMillis(2));
-        assertSetLockTimeOut(TimeUnit.DAYS.toMillis(2));
-    }
-
-    private void assertSetLockTimeOut(long expectedMilliseconds) {
-        TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        customizedItemRepositoryContext.setLockTimeout(expectedMilliseconds);
-        assertEquals(expectedMilliseconds, customizedItemRepositoryContext.getLockTimeout());
-        transactionManager.commit(tx);
     }
 
 }

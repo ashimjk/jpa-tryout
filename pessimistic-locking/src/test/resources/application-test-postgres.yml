@@ -19,6 +19,6 @@ concurrency:
     requiredToSetLockTimeoutQueryHint: false
     lockTimeOutInMsForQueryGetItem: 5000
     test:
+      minimalPossibleLockTimeOutInMs: 1
       requiredToSetLockTimeoutForTestsAtStartup: false
       delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs: 0
-      minimalPossibleLockTimeOutInMs: 1
