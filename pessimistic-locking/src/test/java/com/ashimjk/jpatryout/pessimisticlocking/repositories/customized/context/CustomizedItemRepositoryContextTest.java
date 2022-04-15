@@ -39,7 +39,7 @@ class CustomizedItemRepositoryContextTest {
 
     private void assertSetLockTimeOut(long expectedMilliseconds) {
         TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        customizedItemRepositoryContext.setLockTimeout(expectedMilliseconds);
+        customizedItemRepositoryContext.setLockTimeoutInSeparateTransaction(expectedMilliseconds);
         assertEquals(expectedMilliseconds, customizedItemRepositoryContext.getLockTimeout());
         transactionManager.commit(tx);
     }

@@ -61,6 +61,10 @@ An interface that extends CrudRepository.
 Optional<Item> getItemById(UUID id);
 ```
 
+> This jpa query will try to acquire a pessimistic lock with LockTimeout set to 3 seconds (3000 ms).
+
+> As you see Oracle has great jpa support for setting LockTimeout. No native code needed!
+
 ## Setting LockTimeout for PostgreSQL
 
 ### Get LockTimeout:
@@ -70,6 +74,10 @@ Optional<Item> getItemById(UUID id);
 ### Set LockTimeout:
 
 ```set local lock_timeout = 3000```
+
+> This native query takes effect for the current transaction only.
+
+> You could now acquire a pessimistic lock through jpa query, and it will set LockTimeout to 3 seconds (3000 ms).
 
 ## Setting LockTimeout for Apache Derby
 

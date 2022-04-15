@@ -20,6 +20,8 @@ public class CustomizedItemRepositoryImpl implements CustomizedItemRepository {
     @Override
     public Item getItemAndObtainPessimisticWriteLockingOnItById(UUID id) {
         log.info("Trying to obtain pessimistic lock ...");
+        customizedItemRepositoryContext.setLockTimeoutIfRequired();
+        customizedItemRepositoryContext.setLockTimeoutIfRequiredInSeparateTransaction();
 
         Query query = em.createQuery("select item from Item item where item.id = :id");
         query.setParameter("id", id);

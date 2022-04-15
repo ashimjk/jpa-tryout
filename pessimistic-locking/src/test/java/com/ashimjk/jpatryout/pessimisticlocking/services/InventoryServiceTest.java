@@ -82,16 +82,16 @@ abstract class InventoryServiceTest {
         insertDelayAtTheEndOfPessimisticLockingSection();
         final Item srcItem = itemRepository.save(new Item());
 
-        boolean requiredToSetLockTimeoutForTestsAtStartup = concurrencyPessimisticLockingConfig.isRequiredToSetLockTimeoutForTestsAtStartup();
+        // boolean requiredToSetLockTimeoutForTestsAtStartup = concurrencyPessimisticLockingConfig.isRequiredToSetLockTimeoutForTestsAtStartup();
 
-        if (requiredToSetLockTimeoutForTestsAtStartup) {
-            long lockTimeOutInMs = concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem();
-
-            log.info("... set lockTimeOut {} ms through native query at startup ...", lockTimeOutInMs);
-            TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
-            customizedItemRepositoryContext.setLockTimeout(lockTimeOutInMs);
-            transactionManager.commit(tx);
-        }
+        // if (requiredToSetLockTimeoutForTestsAtStartup) {
+        //     long lockTimeOutInMs = concurrencyPessimisticLockingConfig.getLockTimeOutInMsForQueryGetItem();
+        //
+        //     log.info("... set lockTimeOut {} ms through native query at startup ...", lockTimeOutInMs);
+        //     TransactionStatus tx = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        //     customizedItemRepositoryContext.setLockTimeout(lockTimeOutInMs);
+        //     transactionManager.commit(tx);
+        // }
 
         // When
         final List<Integer> itemAmounts = Arrays.asList(10, 5);

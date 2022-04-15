@@ -1,6 +1,7 @@
 package com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.context;
 
 import com.ashimjk.jpatryout.pessimisticlocking.repositories.customized.ConcurrencyPessimisticLockingConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -8,6 +9,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "spring.jpa.database", havingValue = "postgresql")
 public class PostgresCustomizedItemRepositoryContextImpl extends CustomizedItemRepositoryContext {
@@ -21,8 +23,9 @@ public class PostgresCustomizedItemRepositoryContextImpl extends CustomizedItemR
 
     @Override
     public void setLockTimeout(long timeoutDurationInMs) {
-        Query query = em.createNativeQuery("set local lock_timeout = " + timeoutDurationInMs);
-        query.executeUpdate();
+        log.info("... set lockTimeOut {} ms through native query ...", timeoutDurationInMs);
+        em.createNativeQuery("set local lock_timeout = " + timeoutDurationInMs)
+          .executeUpdate();
     }
 
     @Override
