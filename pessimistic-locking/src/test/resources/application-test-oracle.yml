@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    driverClassName: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521:xe
+    username: system
+    password: oracle
+  jpa:
+    database: oracle
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle10gDialect
+
+concurrency:
+  pessimistic-locking:
+    requiredToSetLockTimeoutForEveryQuery: false
+    requiredToSetLockTimeoutQueryHint: true
+    lockTimeOutInMsForQueryGetItem: 5000
+    test:
+      requiredToSetLockTimeoutForTestsAtStartup: false
+      delayAtTheEndOfTheQueryForPessimisticLockingTestingInMs: 200
+      minimalPossibleLockTimeOutInMs: 0
