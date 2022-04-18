@@ -1,4 +1,4 @@
-package com.ashimjk.jpatryout.optimisticlocking;
+package com.ashimjk.jpatryout;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
