@@ -21,6 +21,7 @@
     <modules>
         <module>pessimistic-locking</module>
         <module>optimistic-locking</module>
+        <module>aggregating-data</module>
     </modules>
 
     <properties>
